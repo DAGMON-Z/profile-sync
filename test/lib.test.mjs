@@ -91,6 +91,9 @@ test("export json", () => {
   assert.equal(j.id, "tryhackme-dagmon");
   assert.equal(j.stats.rooms, 9);
   assert.equal("history" in j, false);
+  assert.equal("fields" in j, false);
+  const c = exportJson(makeStats(custom, { ok: true, fields: { f1: 5 } }), undefined, describe(custom));
+  assert.deepEqual(c.fields.map((f) => [f.key, f.label]), [["f1", "Score"], ["f2", "Place"]]);
 });
 
 test("card: escapes text, headline pill, height fits rows", () => {

@@ -109,14 +109,17 @@ export function historyCsv(history, fields) {
   return [cols.join(","), ...(history || []).map((e) => cols.map((c) => cell(e[c])).join(","))].join("\n") + "\n";
 }
 
-// The JSON written to GitHub, sent to webhooks and exported
-export function exportJson(stats, history) {
+// The JSON written to GitHub, sent to webhooks and exported. "fields" gives
+// each number's label and order, so tools reading the file can name them
+// (important for picked sites, whose keys are just f1, f2...).
+export function exportJson(stats, history, d = null) {
   return {
     id: stats.id,
     site: stats.site,
     title: stats.title,
     url: stats.url,
     stats: stats.fields,
+    ...(d ? { fields: d.fields.map(({ key, label, kind }) => ({ key, label, kind })) } : {}),
     syncedAt: stats.syncedAt,
     ...(history ? { history } : {}),
   };

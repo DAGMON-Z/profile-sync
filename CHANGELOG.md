@@ -5,6 +5,7 @@
 - Fix: after the extension is updated or reloaded, tabs that were already open no longer log an error every minute. The old page script now stops itself, and the next page load starts a fresh one.
 - Fix: picking numbers on a page opened before an update now shows "reload this page" instead of failing silently.
 - The settings page describes webhooks without naming specific services.
+- The stats JSON (GitHub files, webhooks, export) now includes `fields`: each number's label and order, so tools can name the numbers of picked sites too.
 
 ## 1.0.0
 

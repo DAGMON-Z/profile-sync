@@ -122,7 +122,7 @@ async function png(svg) {
 async function exportAs(kind, t, data, theme) {
   const d = describe(t);
   const svg = renderCard(data.latest, d, { theme });
-  const json = JSON.stringify(exportJson(data.latest, data.history), null, 2);
+  const json = JSON.stringify(exportJson(data.latest, data.history, d), null, 2);
   switch (kind) {
     case "json": return download(`${t.id}.json`, "application/json", json);
     case "csv": return download(`${t.id}-history.csv`, "text/csv", historyCsv(data.history, d.fields));

@@ -83,6 +83,7 @@ Profile Sync sends a `POST` with JSON like this whenever stats change:
   "title": "you",
   "url": "https://leetcode.com/u/you/",
   "stats": { "solved": 120, "easy": 60, "medium": 50, "hard": 10, "ranking": 350000 },
+  "fields": [{ "key": "solved", "label": "Solved", "kind": "number" }, "…"],
   "syncedAt": "2026-11-25T18:00:00.000Z",
   "changes": [{ "key": "solved", "label": "Solved", "kind": "number", "from": 119, "to": 120 }]
 }

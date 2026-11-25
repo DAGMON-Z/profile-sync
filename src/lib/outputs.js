@@ -61,7 +61,7 @@ async function hmac(secret, body) {
 
 export async function toWebhook(cfg, stats, before, { d }) {
   if (webhookUrlProblem(cfg.url)) throw new Error("The webhook address isn't valid");
-  const body = JSON.stringify({ event: "stats", ...exportJson(stats), changes: changes(before, stats, d.fields) });
+  const body = JSON.stringify({ event: "stats", ...exportJson(stats, undefined, d), changes: changes(before, stats, d.fields) });
   const headers = { "x-profile-sync-event": "stats" };
   if (cfg.secret) headers["x-profile-sync-signature"] = `sha256=${await hmac(cfg.secret, body)}`;
   await send(cfg.url, body, headers);
@@ -109,7 +109,7 @@ export async function toGitHub(cfg, stats, before, { d, history, all }) {
   const dir = cleanPath(cfg.folder, "profile-sync");
   const files = [];
   if (cfg.json !== false) {
-    files.push({ path: `${dir}/${stats.id}.json`, content: JSON.stringify(exportJson(stats, cfg.history ? history : undefined), null, 2) + "\n" });
+    files.push({ path: `${dir}/${stats.id}.json`, content: JSON.stringify(exportJson(stats, cfg.history ? history : undefined, d), null, 2) + "\n" });
     files.push({ path: `${dir}/all.json`, content: JSON.stringify(all.map((s) => exportJson(s)), null, 2) + "\n" });
   }
   if (cfg.card !== false) {
