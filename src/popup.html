@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Profile Sync</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="popup">
+<header class="top small-top">
+  <img src="icons/32.png" alt="" width="22" height="22">
+  <strong>Profile Sync</strong>
+  <button id="settings" class="link right">Settings</button>
+</header>
+
+<section id="here" class="here" hidden>
+  <p id="here-text"></p>
+  <div id="here-user" class="row" hidden>
+    <input id="here-username" placeholder="Your username" spellcheck="false" maxlength="40">
+  </div>
+  <label id="here-auto-row" class="check"><input type="checkbox" id="here-auto" checked> Update automatically</label>
+  <div class="row">
+    <button id="here-main" class="primary grow"></button>
+    <button id="here-pick" hidden>Pick again</button>
+  </div>
+  <p id="here-note" class="muted small"></p>
+</section>
+
+<section id="list"></section>
+
+<p id="empty" class="muted small" hidden>
+  Open your profile on TryHackMe, LeetCode, Codeforces, AtCoder, CodeChef, HackerRank or Codewars and click this icon.
+  On any other site, use <b>Pick numbers</b>.
+</p>
+
+<template id="tracker">
+  <article class="tracker">
+    <div class="who">
+      <div><a class="title" target="_blank" rel="noopener"></a> <span class="site muted small"></span></div>
+      <span class="dot"></span>
+    </div>
+    <div class="tiles"></div>
+    <p class="state muted small"></p>
+    <div class="row wrap tools">
+      <button class="update">Update</button>
+      <select class="export" aria-label="Export">
+        <option value="">Export…</option>
+        <option value="json">JSON</option>
+        <option value="csv">CSV history</option>
+        <option value="svg">Card SVG</option>
+        <option value="png">Card PNG</option>
+        <option value="copy">Copy JSON</option>
+      </select>
+    </div>
+  </article>
+</template>
+<script type="module" src="popup.js"></script>
+</body>
+</html>

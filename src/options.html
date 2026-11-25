@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profile Sync settings</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page">
+<header class="top">
+  <img src="icons/48.png" alt="" width="36" height="36">
+  <div>
+    <h1>Profile Sync</h1>
+    <p class="muted">Your coding and security stats, wherever you want them. Not affiliated with any of the sites it reads.</p>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Tracked</h2>
+    <p class="muted">The easiest way to add one: open your profile on the site and click the extension's icon. Or add it here.</p>
+    <ul id="trackers" class="trackers"></ul>
+    <div class="row add">
+      <select id="add-platform"></select>
+      <input id="add-username" placeholder="Username" spellcheck="false" maxlength="40">
+      <button id="add" class="primary">Add</button>
+    </div>
+    <p id="add-note" class="note"></p>
+  </section>
+
+  <section class="card" id="github">
+    <div class="head">
+      <h2>GitHub</h2>
+      <label class="switch"><input type="checkbox" id="github-enabled"><span></span></label>
+    </div>
+    <p class="muted">Writes a stats file and a card image for each tracked profile to one of your repos, in one commit, only when stats change. Put a card in a README with <code>![TryHackMe](profile-sync/tryhackme-you.svg)</code>.</p>
+    <div id="github-body" class="body">
+      <p id="github-unconfigured" class="warn" hidden>This build has no GitHub App set up. See docs/github-app.md.</p>
+      <div id="github-out" class="stack" hidden>
+        <button id="github-signin" class="primary">Sign in with GitHub</button>
+        <div id="github-code" class="code-box" hidden>
+          <p>On GitHub, enter this code:</p>
+          <div class="row">
+            <strong id="github-user-code" class="user-code"></strong>
+            <button id="github-copy">Copy</button>
+          </div>
+          <p class="muted">A GitHub tab opened for you. This page continues by itself once you approve.</p>
+        </div>
+      </div>
+      <div id="github-in" class="stack" hidden>
+        <p>Signed in as <strong id="github-login"></strong> · <button id="github-signout" class="link">Sign out</button></p>
+        <label>Repo
+          <div class="row">
+            <select id="github-repo"></select>
+            <button id="github-refresh" title="Reload the list">↻</button>
+          </div>
+        </label>
+        <p class="muted">Missing a repo? <a id="github-install" target="_blank" rel="noopener">Give Profile Sync access to it</a>, then press ↻. Profile Sync can only write to the repos you choose there.</p>
+        <div class="grid">
+          <label>Folder in the repo <input id="github-folder" spellcheck="false"></label>
+          <label>Branch <input id="github-branch" placeholder="default branch" spellcheck="false"></label>
+          <label class="check"><input type="checkbox" id="github-json"> Stats files (.json, plus all.json)</label>
+          <label class="check"><input type="checkbox" id="github-card"> Card images (.svg)</label>
+          <label>Card style
+            <select id="github-theme"><option value="dark">Dark</option><option value="light">Light</option><option value="hacker">Hacker</option></select>
+          </label>
+          <label class="check"><input type="checkbox" id="github-history"> Include daily history in the stats file</label>
+        </div>
+        <div id="card-preview" class="preview"></div>
+      </div>
+      <div class="row end">
+        <span id="github-status" class="status"></span>
+        <button id="github-test">Send now</button>
+        <button id="github-save" class="primary">Save</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="webhook">
+    <div class="head">
+      <h2>Webhook</h2>
+      <label class="switch"><input type="checkbox" id="webhook-enabled"><span></span></label>
+    </div>
+    <p class="muted">Sends new stats as JSON to any address: your website, a server, Zapier, Make or n8n. Sent only when stats change.</p>
+    <div class="body stack">
+      <label>Address <input id="webhook-url" placeholder="https://example.com/thm" spellcheck="false"></label>
+      <label>Signing secret (optional) <input id="webhook-secret" type="password" placeholder="adds an X-Profile-Sync-Signature header" autocomplete="new-password"></label>
+      <div class="row end">
+        <span id="webhook-status" class="status"></span>
+        <button id="webhook-test">Send now</button>
+        <button id="webhook-save" class="primary">Save</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="discord">
+    <div class="head">
+      <h2>Discord</h2>
+      <label class="switch"><input type="checkbox" id="discord-enabled"><span></span></label>
+    </div>
+    <p class="muted">Posts to a channel when your stats change: a level up, more solved problems, a new rank. Create the address in Discord: Channel settings → Integrations → Webhooks.</p>
+    <div class="body stack">
+      <label>Discord webhook address <input id="discord-url" placeholder="https://discord.com/api/webhooks/…" spellcheck="false"></label>
+      <div class="row end">
+        <span id="discord-status" class="status"></span>
+        <button id="discord-test">Send now</button>
+        <button id="discord-save" class="primary">Save</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="muted small">Everything stays in this browser except what you send to the places above. <a href="https://github.com/DAGMON-Z/profile-sync/blob/main/PRIVACY.md" target="_blank" rel="noopener">Privacy</a> · <a href="https://github.com/DAGMON-Z/profile-sync" target="_blank" rel="noopener">Source code</a></p>
+</main>
+<script type="module" src="options.js"></script>
+</body>
+</html>
