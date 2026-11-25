@@ -27,6 +27,8 @@ const targets = {
         // both only go where the user sends them.
         data_collection_permissions: { required: ["websiteContent", "authenticationInfo"] },
       },
+      // Firefox for Android understands data_collection_permissions from 142
+      gecko_android: { strict_min_version: "142.0" },
     };
     return m;
   },
