@@ -14,34 +14,37 @@ Track your stats on TryHackMe, LeetCode, Codeforces and more, or any site, and s
 
 Keep your coding and security progress in one place, and show it wherever you want.
 
-Profile Sync reads your public stats from the sites you learn on and keeps them up to date:
+Profile Sync reads your public profile stats from the learning sites you use and keeps them up to date. Seven sites are built in:
 • TryHackMe: level, rank, rooms, points, badges, streak
-• LeetCode: problems solved (easy / medium / hard), ranking, contest rating
-• Codeforces: rating, max rating, rank, solved problems
-• AtCoder: rating, highest rating, rank
-• CodeChef: rating, stars, global rank, solved problems
-• HackerRank: problems solved, badges, stars
-• Codewars: rank, honor, leaderboard position, kata completed
-• Any other site: pick the numbers you care about on the page, and Profile Sync keeps reading them.
+• LeetCode: problems solved, ranking, contest rating
+• Codeforces: rating, rank, solved problems
+• AtCoder: rating and rank
+• CodeChef: rating, stars and solved problems
+• HackerRank: problems solved and badges
+• Codewars: rank, honor and completed kata
 
-Then send your stats where you want them:
-• GitHub: a stats file and a good-looking card image for your profile README, in your own repo
-• Webhooks: JSON to your website, server, Zapier, Make or n8n, with an optional signature
-• Discord: a message in your channel when you level up or solve more problems
+On any other site, pick the numbers you care about on the page, and Profile Sync keeps reading them.
+
+Send your stats where you want them:
+• Your GitHub repository: a stats file and a card image for your profile README
+• A webhook: JSON to your own site or automation tool, optionally signed
+• A Discord channel: a message when your stats change
 • Export: JSON, CSV history, or the card as SVG or PNG
 
 How to use it:
-1. Open your profile page on a supported site and click the icon, then Track.
+1. Open your profile page on a supported site, click the icon, then Track.
 2. On any other site, click the icon and choose "Pick numbers on this page".
-3. In Settings, turn on GitHub, a webhook or Discord.
+3. In Settings, turn on the outputs you want.
 
 Private by design:
-• No access to any website at install. It only reads the tab you're on after you click its icon.
-• Access to a site is asked for only when you turn on automatic updates for that site.
+• No access to any website at install. It reads the tab you're on only after you click its icon.
+• Access to a site is requested only when you turn on automatic updates for it.
 • Your data stays in your browser and goes only to the places you set up. No analytics, no tracking, no servers of our own.
 • Open source: https://github.com/DAGMON-Z/profile-sync
 
-Profile Sync is independent and not affiliated with TryHackMe, LeetCode, Codeforces, AtCoder, CodeChef, HackerRank, Codewars, GitHub or Discord.
+Profile Sync is an independent project and is not affiliated with or endorsed by the sites it supports.
+
+> Chrome rejected an earlier version for "keyword spam" (Yellow Argon): don't list many site or brand names in a row, for example in a disclaimer.
 
 ## Category
 
