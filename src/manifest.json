@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Profile Sync – coding & security stats",
   "short_name": "Profile Sync",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Track your stats on TryHackMe, LeetCode, Codeforces and more, or any site, and send them to GitHub, webhooks or Discord.",
   "homepage_url": "https://github.com/DAGMON-Z/profile-sync",
   "icons": {

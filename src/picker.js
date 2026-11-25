@@ -134,7 +134,13 @@
     const msg = { type: "picked", name: $(".name").value.trim(), fields: picked.map(({ label, selector, kind }) => ({ label, selector, kind })) };
     $(".save").disabled = true;
     $(".save").textContent = "Saving…";
-    const r = await chrome.runtime.sendMessage(msg);
+    let r;
+    try {
+      r = await chrome.runtime.sendMessage(msg);
+    } catch {
+      // the extension was updated or reloaded since this page opened
+      r = { ok: false, error: "Profile Sync was updated. Reload this page and pick the numbers again." };
+    }
     close();
     if (!r?.ok) alert(`Profile Sync: ${r?.error || "couldn't save"}`);
   };
