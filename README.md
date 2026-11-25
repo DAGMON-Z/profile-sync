@@ -92,7 +92,7 @@ npm test          # unit tests (Node 20+)
 npm run build     # makes dist/profile-sync-chrome-<version>.zip and -firefox-<version>.zip
 ```
 
-To try it without the store: open `chrome://extensions` (or `brave://extensions`), turn on **Developer mode**, click **Load unpacked** and choose the `src` folder. In Firefox, open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on** and choose `dist/firefox/manifest.json`.
+To try it without the store: open `chrome://extensions` (or `brave://extensions`), turn on **Developer mode**, click **Load unpacked** and choose the `src` folder. In Firefox, open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on** and choose `dist/firefox/manifest.json` (run `npm run build` first).
 
 "Sign in with GitHub" needs a GitHub App; see [docs/github-app.md](docs/github-app.md).
 
