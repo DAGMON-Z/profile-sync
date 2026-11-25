@@ -53,7 +53,23 @@ Then add the card to your README:
 ![My TryHackMe stats](profile-sync/tryhackme-you.svg)
 ```
 
-Cards come in three styles: dark, light and hacker.
+Cards come in three styles: dark, light and hacker. When your stats change, Profile Sync updates the `.svg`, and your profile shows the new numbers by itself.
+
+#### What you'll see on GitHub
+
+- **One commit per change, under your own name**, for example `LeetCode: you, solved 120`. Nothing is committed when nothing changed.
+- **Only the repos you picked.** When you give Profile Sync access, choose "Only select repositories". It can't see or touch any other repo.
+- **It never edits your README.** It only writes files in its own folder (`profile-sync/` by default); adding the card to your README is up to you.
+- **Nothing passes through anyone else.** Your browser talks to GitHub directly; the extension's author can't see your stats or your repos.
+
+#### Checking or removing access
+
+On GitHub, open **Settings → Applications**:
+
+- **Installed GitHub Apps → Profile Sync Extension → Configure**: see or change which repos it may write to, or uninstall it.
+- **Authorized GitHub Apps → Profile Sync Extension → Revoke**: sign it out everywhere.
+
+In the extension, **Settings → GitHub → Sign out** forgets the sign-in in your browser.
 
 ### Webhooks
 

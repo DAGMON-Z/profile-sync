@@ -67,6 +67,14 @@
           <label class="check"><input type="checkbox" id="github-history"> Include daily history in the stats file</label>
         </div>
         <div id="card-preview" class="preview"></div>
+        <details class="help">
+          <summary>What happens on GitHub?</summary>
+          <ul>
+            <li>One commit per change, under your own name. Nothing is committed when nothing changed.</li>
+            <li>It only writes in its folder (<code>profile-sync/</code>) in the repos you picked. It never edits your README; add the card there yourself.</li>
+            <li>To check or remove access: GitHub → Settings → Applications → <b>Installed GitHub Apps</b> (which repos) or <b>Authorized GitHub Apps</b> (Revoke).</li>
+          </ul>
+        </details>
       </div>
       <div class="row end">
         <span id="github-status" class="status"></span>
