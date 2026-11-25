@@ -10,7 +10,7 @@ Open https://github.com/settings/apps/new and fill in:
 
 | Field | Value |
 |---|---|
-| **GitHub App name** | `Profile Sync` (if that's taken, for example `Profile Sync Extension`) |
+| **GitHub App name** | `Profile Sync Extension` (`Profile Sync` is taken by an account) |
 | **Homepage URL** | `https://github.com/DAGMON-Z/profile-sync` |
 | **Callback URL** | leave empty |
 | **Expire user authorization tokens** | keep ticked |
@@ -37,9 +37,11 @@ Press **Create GitHub App**.
 On the app's page:
 
 - **Client ID**: it looks like `Iv23li…`.
-- **The app's short name ("slug")**: it's in the app's public link, `https://github.com/apps/<slug>`. For example, `profile-sync`.
+- **The app's short name ("slug")**: it's in the app's public link, `https://github.com/apps/<slug>`. For example, `profile-sync-extension`.
 
-**Don't** generate a client secret or a private key; they aren't needed.
+**Don't** generate a client secret; it isn't needed.
+
+GitHub asks you to **generate a private key** before the app can be installed anywhere. Generate one, then delete the downloaded `.pem` file: the extension never uses it, and GitHub only needs the key to exist on its side.
 
 ## 3. Put them in the extension
 
@@ -48,7 +50,7 @@ Edit `src/config.js`:
 ```js
 export const GITHUB = {
   clientId: "Iv23li…",
-  appSlug: "profile-sync",
+  appSlug: "profile-sync-extension",
 };
 ```
 

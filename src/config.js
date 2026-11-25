@@ -1,6 +1,6 @@
 // Build settings. The GitHub App's client ID is public (it's not a secret).
-// Register the app as described in docs/github-app.md, then fill these in.
+// The app is registered as described in docs/github-app.md.
 export const GITHUB = {
-  clientId: "",
-  appSlug: "",
+  clientId: "Iv23li1lMrGhy58MkhZz",
+  appSlug: "profile-sync-extension",
 };
