@@ -18,7 +18,7 @@ const SAMPLE = {
 let settings;
 
 async function store(change) {
-  settings = { outputs: { ...settings.outputs, ...change.outputs } };
+  settings = { ...settings, ...change, outputs: { ...settings.outputs, ...(change.outputs || {}) } };
   await chrome.storage.local.set({ settings });
 }
 
@@ -111,6 +111,8 @@ $("add").addEventListener("click", async () => {
   $("add-username").value = "";
   showTrackers();
 });
+
+$("check-every").addEventListener("change", () => store({ checkEvery: Number($("check-every").value) }));
 
 // ---------- GitHub ----------
 
@@ -277,6 +279,7 @@ async function start() {
   $("discord-enabled").checked = settings.outputs.discord.enabled;
   $("discord-url").value = settings.outputs.discord.url;
   fillPlatforms();
+  $("check-every").value = String(settings.checkEvery);
   await Promise.all([showTrackers(), showGitHub(), preview(), showStatus()]);
 }
 

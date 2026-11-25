@@ -3,10 +3,11 @@
 // Reading stats:
 //  - When you click the icon, the popup asks this part to read the tab you're
 //    on (allowed by "activeTab": only that tab, only after your click).
-//  - Built-in platforms with public data are re-read every 30 minutes, if you
-//    allowed automatic updates for that site.
-//  - TryHackMe and picked pages are re-read while you have them open, if you
-//    allowed automatic updates for that site (autosync.js tells us).
+//  - With automatic updates on for a site, every open page of that site is
+//    read when it loads and once a minute while it's in front (autosync.js
+//    tells us), so new stats show up about a minute after you earn them.
+//  - Built-in platforms with public data are also re-read in the background
+//    every few minutes (Settings: 5, 15, 30 or 60), even with no tab open.
 // Then the stats go to every output you turned on, only when they changed
 // (or when the last send to that output failed).
 
@@ -15,8 +16,7 @@ import { addToHistory, describe, fingerprint, makeStats, trackerId } from "./lib
 import { toDiscord, toGitHub, toWebhook } from "./lib/outputs.js";
 import { getData, getSettings, getTrackers, setData } from "./lib/settings.js";
 
-const EVERY_MIN = 30; // background updates
-const PAGE_GAP = 3 * 60 * 1000; // at most one read per tracker every 3 minutes from open pages
+const PAGE_GAP = 60 * 1000; // at most one read per tracker per minute (be gentle with the sites)
 
 // ---------- reading ----------
 
@@ -183,12 +183,11 @@ async function removeTracker(id) {
   await chrome.storage.local.remove(`t:${id}`);
 }
 
-// Register autosync.js on the sites that need an open tab, if allowed
+// Register autosync.js on every site with automatic updates on, if allowed
 async function updateAuto() {
   const origins = new Set();
   for (const t of await getTrackers()) {
-    const needsTab = t.kind === "custom" || !PLATFORMS[t.platform].anywhere;
-    if (t.auto && needsTab && (await canAccess(t))) originsOf(t).forEach((o) => origins.add(o));
+    if (t.auto && (await canAccess(t))) originsOf(t).forEach((o) => origins.add(o));
   }
   const old = await chrome.scripting.getRegisteredContentScripts({ ids: ["autosync"] });
   if (old.length) await chrome.scripting.unregisterContentScripts({ ids: ["autosync"] });
@@ -207,8 +206,14 @@ async function syncAllInBackground() {
 
 chrome.alarms.onAlarm.addListener((a) => a.name === "sync" && syncAllInBackground());
 
+async function setAlarm() {
+  const { checkEvery } = await getSettings();
+  const old = await chrome.alarms.get("sync");
+  if (old?.periodInMinutes !== checkEvery) await chrome.alarms.create("sync", { periodInMinutes: checkEvery, delayInMinutes: 1 });
+}
+
 async function setup() {
-  await chrome.alarms.create("sync", { periodInMinutes: EVERY_MIN, delayInMinutes: 1 });
+  await setAlarm();
   await updateAuto().catch(() => {});
 }
 chrome.runtime.onInstalled.addListener(setup);
@@ -218,7 +223,10 @@ chrome.permissions.onRemoved.addListener(() => updateAuto());
 
 // Settings changed (an output turned on, a new repo...): send what's missing
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.settings) deliver();
+  if (area === "local" && changes.settings) {
+    deliver();
+    setAlarm();
+  }
 });
 
 // ---------- messages ----------
@@ -261,7 +269,7 @@ const FROM_PAGES = {
   async "page-open"(msg, tab) {
     for (const t of await getTrackers()) {
       if (!t.auto) continue;
-      const match = t.kind === "custom" ? samePage(tab.url, t.url) : !PLATFORMS[t.platform].anywhere && originsOf(t).some((o) => tab.url.startsWith(o.slice(0, -1)));
+      const match = t.kind === "custom" ? samePage(tab.url, t.url) : originsOf(t).some((o) => tab.url.startsWith(o.slice(0, -1)));
       if (match) await syncTracker(t, { tabId: tab.id });
     }
     return { ok: true };

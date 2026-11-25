@@ -21,7 +21,7 @@ It only sends when your stats change, and it never sees your passwords.
 | Site | What it reads | Updates |
 |---|---|---|
 | TryHackMe | level, rank, rooms, points, badges, streak, league | while a TryHackMe tab is open |
-| LeetCode | solved (easy / medium / hard), ranking, contest rating | automatically, every 30 minutes |
+| LeetCode | solved (easy / medium / hard), ranking, contest rating | automatically: while the site is open, and every 5 minutes |
 | Codeforces | rating, max rating, rank, solved problems, contribution | automatically |
 | AtCoder | rating, highest rating, rank, rated matches | automatically |
 | CodeChef | rating, highest rating, stars, global rank, solved | automatically |

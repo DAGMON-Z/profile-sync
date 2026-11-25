@@ -57,7 +57,7 @@ Profile Sync keeps a user's stats from coding and security learning sites (and n
 - `activeTab`: to read the stats from the page the user is on, only after they click the extension's icon.
 - `scripting`: to run the stats reader and the "pick numbers" tool on that page, and to read open pages of sites the user turned automatic updates on for.
 - `storage`: to save the user's tracked profiles, settings, stats history and GitHub sign-in on their device.
-- `alarms`: to check for new stats every 30 minutes on sites the user turned automatic updates on for.
+- `alarms`: to check for new stats every few minutes (5 by default, adjustable in settings), only for sites the user turned automatic updates on for.
 - Optional host permissions (`https://*/*`, `http://localhost/*`, `http://127.0.0.1/*`): asked for one site at a time when the user turns on automatic updates for a site, signs in with GitHub, or adds a webhook or Discord address. Webhooks can be any address the user owns, so the optional pattern can't be narrower.
 
 **Remote code:** No, I am not using remote code.

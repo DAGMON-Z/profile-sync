@@ -36,7 +36,7 @@ Profile Sync has **no servers of its own**. It doesn't collect analytics, doesn'
 
 - `activeTab` and `scripting`: read the page you're on, only after you click the icon.
 - `storage`: keep your settings and stats on your device.
-- `alarms`: check for new stats every 30 minutes, for sites with automatic updates.
+- `alarms`: check for new stats every few minutes (5 by default, adjustable), for sites with automatic updates.
 - Access to specific websites is optional. It's asked for one site at a time, only when you turn on automatic updates for a site or turn on an output.
 
 ## Contact
