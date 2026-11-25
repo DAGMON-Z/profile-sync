@@ -79,6 +79,13 @@ Certify all three statements: the data is not sold to third parties, not used or
 
 ## Images to upload
 
-- Icon: `src/icons/128.png`
-- Chrome: screenshots at 1280×800 (1 to 5), a small promo tile at 440×280
-- Firefox: screenshots (any size; 1280×800 works)
+All in the `store/` folder:
+
+| File | Size | Where |
+|---|---|---|
+| `src/icons/128.png` | 128×128 | Chrome and Firefox: icon |
+| `store/1-stats.png` | 1280×800 | screenshot 1: the popup with tracked profiles |
+| `store/2-cards.png` | 1280×800 | screenshot 2: the GitHub cards |
+| `store/3-pick.png` | 1280×800 | screenshot 3: picking numbers on any site |
+| `store/4-send.png` | 1280×800 | screenshot 4: GitHub, webhook and Discord settings |
+| `store/promo-440x280.png` | 440×280 | Chrome: small promo tile |
