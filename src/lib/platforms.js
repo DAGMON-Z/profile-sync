@@ -105,10 +105,11 @@ export const PLATFORMS = {
       { key: "maxRating", label: "Max rating", kind: "number" },
       { key: "rank", label: "Rank", kind: "text" },
       { key: "maxRank", label: "Max rank", kind: "text" },
-      { key: "solved", label: "Solved", kind: "number" },
+      // keep: only known when read from an open Codeforces tab (see read)
+      { key: "solved", label: "Solved", kind: "number", keep: true },
       { key: "contribution", label: "Contribution", kind: "number" },
     ],
-    read: async function (user) {
+    read: async function (user, inPage) {
       const api = async (path) => {
         const res = await fetch(`https://codeforces.com/api/${path}`, { credentials: "omit" });
         const j = await res.json().catch(() => null);
@@ -117,15 +118,33 @@ export const PLATFORMS = {
       };
       try {
         const [u] = await api(`user.info?handles=${encodeURIComponent(user)}`);
-        const subs = await api(`user.status?handle=${encodeURIComponent(user)}`);
-        const solved = new Set(subs.filter((s) => s.verdict === "OK").map((s) => `${s.problem.contestId}-${s.problem.index}`));
+        // "N problems solved for all time" is only on the profile page (it also
+        // counts group and gym problems, which the API doesn't list). The page
+        // can only be read from an open Codeforces tab; otherwise it's left out
+        // and the last value read is kept.
+        let solved;
+        if (inPage) {
+          const res = await fetch(`/profile/${encodeURIComponent(user)}`, { credentials: "same-origin" });
+          if (res.ok) {
+            // Find the words "solved for all time" and the number shown with them
+            const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+            for (const el of doc.querySelectorAll("div, span")) {
+              if (el.children.length || !/^solved for all time$/i.test(el.textContent.trim())) continue;
+              const m = (el.parentElement?.textContent || "").match(/([\d,]+)\s*problems?/i);
+              if (m) {
+                solved = Number(m[1].replace(/,/g, ""));
+                break;
+              }
+            }
+          }
+        }
         const title = (s) => (s ? s.replace(/\b\w/g, (c) => c.toUpperCase()) : undefined);
         return {
           ok: true,
           username: u.handle,
           fields: {
             rating: u.rating, maxRating: u.maxRating, rank: title(u.rank), maxRank: title(u.maxRank),
-            solved: solved.size, contribution: u.contribution,
+            solved, contribution: u.contribution,
           },
         };
       } catch (e) {

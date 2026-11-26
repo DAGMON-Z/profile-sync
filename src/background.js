@@ -82,6 +82,13 @@ async function record(t, result) {
     await setData(t.id, data);
     return { ok: false, error: result.error };
   }
+  // Fields marked "keep" are only known from some reads (e.g. Codeforces'
+  // all-time solved count, from an open tab): keep the last value otherwise
+  for (const f of describe(t).fields) {
+    if (f.keep && result.fields && result.fields[f.key] === undefined && data.latest?.fields?.[f.key] !== undefined) {
+      result.fields[f.key] = data.latest.fields[f.key];
+    }
+  }
   const stats = makeStats(t, result);
   if (!Object.keys(stats.fields).length) {
     data.status.read = { ok: false, at: now, note: "No numbers found" };
