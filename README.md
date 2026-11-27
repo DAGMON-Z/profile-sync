@@ -16,6 +16,17 @@ Profile Sync reads your stats from TryHackMe, LeetCode, Codeforces and more (or 
 
 It only sends when your stats change, and it never sees your passwords.
 
+## Install
+
+<p align="center">
+<a href="https://chromewebstore.google.com/detail/mdeibpjelhkmbndfllnjkalefgaobohm"><img src="https://img.shields.io/chrome-web-store/v/mdeibpjelhkmbndfllnjkalefgaobohm?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white&color=4285F4" alt="Chrome Web Store"></a>
+</p>
+
+- **Chrome, Brave, Edge, Opera, Vivaldi:** [Chrome Web Store](https://chromewebstore.google.com/detail/mdeibpjelhkmbndfllnjkalefgaobohm)
+- **Firefox** (desktop and Android): in review at Firefox Add-ons. Until then, load it by hand (see [Building it yourself](#building-it-yourself)).
+
+Updates install automatically. See what changed in the [changelog](CHANGELOG.md).
+
 ## Supported sites
 
 | Site | What it reads | Updates |
