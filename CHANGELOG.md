@@ -7,6 +7,7 @@
 - Set up with an older version? Signing in on a new computer also finds your existing stats files and tracks those profiles.
 - **Choose which numbers to show** for each tracked profile (Settings → Tracked → Numbers). Hidden numbers are left off the card, the popup and Discord messages, but stay in the stats files. The choice is saved with your settings, so every computer uses it.
 - Codeforces: "Solved" is now labelled "Problems solved".
+- Fix: when something else commits to the repo at the same moment (for example a profile bot), writing tries again up to 3 times instead of failing with "Update is not a fast forward".
 - Fix: with two computers, `all.json` no longer drops profiles that only the other computer has read.
 
 ## 1.0.1

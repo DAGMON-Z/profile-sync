@@ -133,11 +133,5 @@ export async function toGitHub(cfg, stats, before, { d, history, all, ids = all.
   if (!files.length) return "nothing to write";
   const first = shown(d).fields.find((f) => stats.fields[f.key] !== undefined);
   const message = `${stats.site}: ${stats.title}${first ? `, ${first.label.toLowerCase()} ${format(stats.fields[first.key], first.kind)}` : ""}`;
-  try {
-    return await github.writeFiles(cfg.repo, files, message, cfg.branch || "");
-  } catch (e) {
-    // Someone pushed at the same moment: try once more on top of it
-    if (e.status === 422) return github.writeFiles(cfg.repo, files, message, cfg.branch || "");
-    throw e;
-  }
+  return github.writeFiles(cfg.repo, files, message, cfg.branch || "");
 }

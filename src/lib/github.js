@@ -110,6 +110,7 @@ async function token() {
 async function call(path, { method = "GET", body, token: given } = {}) {
   const res = await fetch(API + path, {
     method,
+    cache: "no-store", // GitHub lets browsers reuse answers for 60 s; we need the repo as it is now
     headers: {
       accept: "application/vnd.github+json",
       authorization: `Bearer ${given || (await token())}`,
@@ -157,7 +158,20 @@ export async function readFile(repo, path, branch = "") {
 
 // Write several files in ONE commit. Skips the commit if nothing changed.
 // files: [{ path, content }]. Returns "committed" or "unchanged".
+// If something else commits at the same moment (GitHub answers 422, "not a
+// fast forward"), it starts again on top of that commit, up to 3 times.
 export async function writeFiles(repo, files, message, branch = "") {
+  for (let i = 0; ; i++) {
+    try {
+      return await writeOnce(repo, files, message, branch);
+    } catch (e) {
+      if (e.status !== 422 || i >= 2) throw e;
+      await new Promise((ok) => setTimeout(ok, 1000 + Math.random() * 2000));
+    }
+  }
+}
+
+async function writeOnce(repo, files, message, branch) {
   const base = `/repos/${repo}`;
   if (!branch) branch = (await call(base)).default_branch;
   let ref;
