@@ -4,6 +4,7 @@
 
 - **Your settings follow you to every computer.** What you track and how GitHub is set up are saved as `profile-sync/settings.json` in your repo. On another computer, install the extension and press **Sign in with GitHub**: it finds that file and loads everything, then asks once to allow the sites. Changes on one computer show up on the others within a few minutes. Webhook and Discord addresses are never saved there; set those on each computer.
 - **Your accounts are tracked by themselves.** When you're logged in on Codeforces, LeetCode or AtCoder and nothing is tracked there yet, your account is tracked automatically (if that site is allowed). You can turn this off in Settings. On those sites, the icon also offers your logged-in account even when you're not on your profile page.
+- A new computer starts from the stats already on GitHub, so numbers it can't read yet (like the Codeforces all-time count) are never dropped from your files.
 - Set up with an older version? Signing in on a new computer also finds your existing stats files and tracks those profiles.
 - **Choose which numbers to show** for each tracked profile (Settings → Tracked → Numbers). Hidden numbers are left off the card, the popup and Discord messages, but stay in the stats files. The choice is saved with your settings, so every computer uses it.
 - Codeforces: "Solved" is now labelled "Problems solved".

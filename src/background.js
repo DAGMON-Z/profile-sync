@@ -341,11 +341,39 @@ async function applyCloud(settings, remote, repo) {
     cloud: { at: remote.updatedAt, text: compare(next, remote.trackers) },
   });
   await updateAuto().catch(() => {});
+  await seedFromGitHub(repo).catch(() => {});
   // Numbers shown changed on another computer: redraw those cards
   const key = (t) => JSON.stringify(t?.hide || []);
   for (const t of remote.trackers) {
     const old = before.find((x) => x.id === t.id);
     if (old && key(old) !== key(t)) await deliver(t.id, { only: "github", force: true });
+  }
+}
+
+// A computer that just got a tracker from GitHub starts from the stats
+// already saved there, so numbers it can't read yet (like Codeforces'
+// all-time count, only known from an open tab) aren't dropped from the files
+async function seedFromGitHub(repo) {
+  const settings = await getSettings();
+  const g = settings.outputs.github;
+  const folder = cleanPath(g.folder, "profile-sync");
+  for (const t of await getTrackers()) {
+    const data = await getData(t.id);
+    if (data.latest) continue;
+    let doc;
+    try {
+      doc = JSON.parse((await github.readFile(repo, `${folder}/${t.id}.json`, g.branch || "")) || "null");
+    } catch {
+      continue;
+    }
+    if (!doc || doc.id !== t.id || !doc.stats) continue;
+    const stats = makeStats(t, { ok: true, username: doc.title, fields: doc.stats }, new Date(doc.syncedAt || Date.now()));
+    if (!Object.keys(stats.fields).length) continue;
+    data.latest = stats;
+    data.history = addToHistory(data.history, stats, new Date(stats.syncedAt));
+    // already on GitHub: nothing to send until something changes
+    data.status.github = { ok: true, at: Date.now(), print: fingerprint(stats), sent: stats, note: "loaded from GitHub" };
+    await setData(t.id, data);
   }
 }
 
@@ -376,6 +404,7 @@ async function connect() {
     const list = [...local, ...found.filter((t) => !local.some((x) => x.id === t.id))];
     await chrome.storage.local.set({ settings: { ...settings, outputs: { ...settings.outputs, github: { ...settings.outputs.github, enabled: true, repo } } } });
     await saveTrackers(list);
+    await seedFromGitHub(repo).catch(() => {});
     return { ok: true, found: "stats", repo, count: found.length };
   }
   if (repos.length === 1) {
