@@ -334,12 +334,19 @@ async function applyCloud(settings, remote, repo) {
     ...(remote.autoAccounts !== undefined ? { autoAccounts: remote.autoAccounts } : {}),
     outputs: { ...settings.outputs, github: { ...settings.outputs.github, ...remote.github, enabled: true, repo } },
   };
+  const before = await getTrackers();
   await chrome.storage.local.set({
     settings: next,
     trackers: remote.trackers,
     cloud: { at: remote.updatedAt, text: compare(next, remote.trackers) },
   });
   await updateAuto().catch(() => {});
+  // Numbers shown changed on another computer: redraw those cards
+  const key = (t) => JSON.stringify(t?.hide || []);
+  for (const t of remote.trackers) {
+    const old = before.find((x) => x.id === t.id);
+    if (old && key(old) !== key(t)) await deliver(t.id, { only: "github", force: true });
+  }
 }
 
 // After signing in on a new computer: find the repo with your settings
