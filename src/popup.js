@@ -43,7 +43,13 @@ async function showHere(trackers) {
 
   if (found) {
     const p = PLATFORMS[found.platform];
-    const user = found.username;
+    let user = found.username;
+    let mine = false;
+    // Not on a profile page: which account is logged in here?
+    if (!user && p.me) {
+      const [res] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: p.me }).catch(() => []);
+      if (typeof res?.result === "string" && /^[\w.-]{1,40}$/.test(res.result)) [user, mine] = [res.result, true];
+    }
     const tracked = user && trackers.find((t) => t.kind === "builtin" && t.platform === found.platform && t.username.toLowerCase() === user.toLowerCase());
     if (tracked) {
       $("here-text").textContent = `${p.name}: ${user}. Already tracked.`;
@@ -52,7 +58,7 @@ async function showHere(trackers) {
       main.onclick = () => run(main, { type: "sync", id: tracked.id, tabId: tab.id });
       return;
     }
-    $("here-text").textContent = user ? `${p.name} profile: ${user}` : `${p.name}. Which username?`;
+    $("here-text").textContent = user ? `${p.name} ${mine ? "account (you're logged in)" : "profile"}: ${user}` : `${p.name}. Which username?`;
     $("here-user").hidden = Boolean(user);
     main.textContent = `Track on ${p.name}`;
     main.onclick = () => {
@@ -132,7 +138,21 @@ async function exportAs(kind, t, data, theme) {
   }
 }
 
+// Sites tracked (e.g. loaded from GitHub) that this browser must still allow
+async function showAllow() {
+  const r = await ask({ type: "missing" }).catch(() => null);
+  const origins = r?.origins || [];
+  $("allow").hidden = !origins.length;
+  if (!origins.length) return;
+  const names = origins.map((o) => o.replace(/^https?:\/\/(www\.)?|\/\*$/g, ""));
+  $("allow-text").textContent = `To update ${names.join(", ")} on this computer too, allow Profile Sync to read ${origins.length === 1 ? "it" : "them"}.`;
+  $("allow-btn").onclick = async () => {
+    if (await chrome.permissions.request({ origins })) render();
+  };
+}
+
 async function render() {
+  showAllow();
   const trackers = await getTrackers();
   const { outputs } = await getSettings();
   await showHere(trackers);

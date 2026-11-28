@@ -104,13 +104,27 @@ export function cleanPath(text, fallback) {
 }
 
 // GitHub: <folder>/<id>.json, <folder>/<id>.svg and <folder>/all.json, in one commit
-export async function toGitHub(cfg, stats, before, { d, history, all }) {
+// all.json: every tracked profile. Profiles this computer hasn't read yet
+// (another computer wrote them) are kept from the file already there.
+export function mergeAll(existing, all, ids) {
+  let old = [];
+  try {
+    old = JSON.parse(existing || "[]");
+  } catch {}
+  const mine = all.map((s) => exportJson(s));
+  const kept = (Array.isArray(old) ? old : []).filter((e) => e && ids.includes(e.id) && !mine.some((m) => m.id === e.id));
+  return [...mine, ...kept].sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+}
+
+export async function toGitHub(cfg, stats, before, { d, history, all, ids = all.map((s) => s.id) }) {
   if (!cfg.repo) throw new Error("Pick a repo in the settings");
   const dir = cleanPath(cfg.folder, "profile-sync");
   const files = [];
   if (cfg.json !== false) {
     files.push({ path: `${dir}/${stats.id}.json`, content: JSON.stringify(exportJson(stats, cfg.history ? history : undefined, d), null, 2) + "\n" });
-    files.push({ path: `${dir}/all.json`, content: JSON.stringify(all.map((s) => exportJson(s)), null, 2) + "\n" });
+    const missing = ids.some((id) => !all.some((s) => s.id === id));
+    const existing = missing ? await github.readFile(cfg.repo, `${dir}/all.json`, cfg.branch || "").catch(() => null) : null;
+    files.push({ path: `${dir}/all.json`, content: JSON.stringify(mergeAll(existing, all, ids), null, 2) + "\n" });
   }
   if (cfg.card !== false) {
     files.push({ path: `${dir}/${stats.id}.svg`, content: renderCard(stats, d, { theme: cfg.theme }) });

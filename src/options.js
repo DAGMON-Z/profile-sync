@@ -113,6 +113,20 @@ $("add").addEventListener("click", async () => {
 });
 
 $("check-every").addEventListener("change", () => store({ checkEvery: Number($("check-every").value) }));
+$("auto-accounts").addEventListener("change", () => store({ autoAccounts: $("auto-accounts").checked }));
+
+// Sites this browser still has to allow (e.g. settings loaded from GitHub)
+async function showAllow() {
+  const r = await ask({ type: "missing" }).catch(() => null);
+  const origins = r?.origins || [];
+  $("allow").hidden = !origins.length;
+  if (!origins.length) return;
+  const names = origins.map((o) => o.replace(/^https?:\/\/(www\.)?|\/\*$/g, ""));
+  $("allow-text").textContent = `Allow Profile Sync to read ${names.join(", ")} in this browser, so they update automatically here too.`;
+  $("allow-btn").onclick = async () => {
+    if (await chrome.permissions.request({ origins })) showAllow(), showTrackers();
+  };
+}
 
 // ---------- GitHub ----------
 
@@ -153,7 +167,18 @@ $("github-signin").addEventListener("click", async () => {
     chrome.tabs.create({ url: code.verification_uri });
     await github.finishSignIn(code);
     $("github-code").hidden = true;
-    await showGitHub();
+    // Look for settings saved from another computer
+    note($("github-status"), "Looking for your settings on GitHub…");
+    const r = await ask({ type: "connect" }).catch((e) => ({ ok: false, error: e.message }));
+    const text = !r?.ok
+      ? `Signed in. Couldn't look for saved settings: ${r?.error || "unknown error"}`
+      : r.found === "settings" || r.found === "stats"
+        ? `✓ Loaded your settings from ${r.repo}: ${r.count} tracked profile${r.count === 1 ? "" : "s"}.`
+        : r.found === "repo"
+          ? `✓ Signed in. Stats will go to ${r.repo}.`
+          : "✓ Signed in. Choose the repo for your stats below.";
+    sessionStorage.setItem("connected", text);
+    location.reload(); // show the loaded settings
   } catch (e) {
     $("github-code").hidden = true;
     note($("github-status"), `✗ ${e.message}`, "bad");
@@ -280,7 +305,14 @@ async function start() {
   $("discord-url").value = settings.outputs.discord.url;
   fillPlatforms();
   $("check-every").value = String(settings.checkEvery);
-  await Promise.all([showTrackers(), showGitHub(), preview(), showStatus()]);
+  $("auto-accounts").checked = settings.autoAccounts;
+  await Promise.all([showTrackers(), showGitHub(), preview(), showStatus(), showAllow()]);
+  const connected = sessionStorage.getItem("connected");
+  if (connected) {
+    sessionStorage.removeItem("connected");
+    note($("github-status"), connected, connected.startsWith("✓") ? "good" : "");
+    $("github").scrollIntoView();
+  }
 }
 
 let timer = null;
@@ -291,6 +323,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     showTrackers();
     showStatus();
     preview();
+    showAllow();
   }, 300);
 });
 

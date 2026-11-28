@@ -7,6 +7,7 @@ export const CHECK_EVERY = [5, 15, 30, 60]; // background check, in minutes
 
 export const DEFAULTS = {
   checkEvery: 5,
+  autoAccounts: true, // track your logged-in account on supported sites by itself
   outputs: {
     github: { enabled: false, repo: "", branch: "", folder: "profile-sync", json: true, card: true, theme: "dark", history: false },
     webhook: { enabled: false, url: "", secret: "" },
@@ -19,6 +20,7 @@ export async function getSettings() {
   const out = settings?.outputs || {};
   return {
     checkEvery: CHECK_EVERY.includes(settings?.checkEvery) ? settings.checkEvery : DEFAULTS.checkEvery,
+    autoAccounts: settings?.autoAccounts ?? DEFAULTS.autoAccounts,
     outputs: {
       github: { ...DEFAULTS.outputs.github, ...out.github },
       webhook: { ...DEFAULTS.outputs.webhook, ...out.webhook },

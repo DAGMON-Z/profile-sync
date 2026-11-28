@@ -7,6 +7,8 @@
 //                 false if it only works inside an open tab of the site.
 //   fields        what to show, in order. kind: number | text | rank
 //   headline      the one field shown big on the card
+//   me()          optional: which account is logged in, read inside the
+//                 site's own tab (self-contained too). Returns a username or null.
 
 const first = (re, url) => (url.match(re) || [])[1] || null;
 
@@ -64,6 +66,17 @@ export const PLATFORMS = {
       { key: "ranking", label: "Ranking", kind: "rank" },
       { key: "contestRating", label: "Contest rating", kind: "number" },
     ],
+    me: async function () {
+      const csrf = (document.cookie.match(/(?:^|; )csrftoken=([^;]+)/) || [])[1] || "";
+      const res = await fetch("/graphql", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json", "x-csrftoken": csrf },
+        body: JSON.stringify({ query: "query { userStatus { isSignedIn username } }" }),
+      });
+      const s = res.ok ? ((await res.json()).data || {}).userStatus : null;
+      return s && s.isSignedIn && s.username ? s.username : null;
+    },
     read: async function (user) {
       const query = `query($u: String!) {
         matchedUser(username: $u) { username profile { ranking } submitStatsGlobal { acSubmissionNum { difficulty count } } }
@@ -109,6 +122,10 @@ export const PLATFORMS = {
       { key: "solved", label: "Solved", kind: "number", keep: true },
       { key: "contribution", label: "Contribution", kind: "number" },
     ],
+    me: async function () {
+      const a = document.querySelector('.lang-chooser a[href^="/profile/"]');
+      return a ? a.textContent.trim() || null : null;
+    },
     read: async function (user, inPage) {
       const api = async (path) => {
         const res = await fetch(`https://codeforces.com/api/${path}`, { credentials: "omit" });
@@ -167,6 +184,11 @@ export const PLATFORMS = {
       { key: "rank", label: "Rank", kind: "rank" },
       { key: "matches", label: "Rated matches", kind: "number" },
     ],
+    me: async function () {
+      const a = document.querySelector('.navbar-right .dropdown-menu a[href^="/users/"]');
+      const m = a ? a.getAttribute("href").match(/^\/users\/([\w.-]+)$/) : null;
+      return m ? m[1] : null;
+    },
     read: async function (user) {
       const res = await fetch(`https://atcoder.jp/users/${encodeURIComponent(user)}?lang=en`, { credentials: "omit" });
       if (res.status === 404) return { ok: false, error: "Profile not found" };

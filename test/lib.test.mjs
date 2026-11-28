@@ -6,7 +6,7 @@ import crypto from "node:crypto";
 import { PLATFORMS, cleanFields, detect } from "../src/lib/platforms.js";
 import { addToHistory, changes, describe, exportJson, fingerprint, format, historyCsv, makeStats, trackerId } from "../src/lib/stats.js";
 import { esc, renderCard } from "../src/lib/card.js";
-import { cleanPath, discordMessage, discordUrlProblem, originOf, toWebhook, webhookUrlProblem } from "../src/lib/outputs.js";
+import { cleanPath, mergeAll, discordMessage, discordUrlProblem, originOf, toWebhook, webhookUrlProblem } from "../src/lib/outputs.js";
 
 const thm = { kind: "builtin", platform: "tryhackme", username: "DAGMON" };
 thm.id = trackerId(thm);
@@ -149,4 +149,64 @@ test("webhook sends json with a correct signature", async () => {
   assert.deepEqual(body.changes.map((c) => c.key), ["rooms"]);
   const want = "sha256=" + crypto.createHmac("sha256", "s3cret").update(got.body).digest("hex");
   assert.equal(got.headers["x-profile-sync-signature"], want);
+});
+
+import { fromCloud, toCloud, trackersFromStats } from "../src/lib/cloud.js";
+import { DEFAULTS } from "../src/lib/settings.js";
+
+test("settings file: round trip, no webhook or Discord addresses", () => {
+  const settings = structuredClone({ ...DEFAULTS, outputs: { ...DEFAULTS.outputs } });
+  settings.outputs.github = { ...settings.outputs.github, enabled: true, repo: "me/me", theme: "hacker" };
+  settings.outputs.webhook = { enabled: true, url: "https://example.com/hook", secret: "s3cret" };
+  settings.outputs.discord = { enabled: true, url: "https://discord.com/api/webhooks/1/abc" };
+  const trackers = [
+    { id: "codeforces-dagmon", kind: "builtin", platform: "codeforces", username: "DAGMON", auto: true },
+    { id: "site-x", kind: "custom", name: "X", url: "https://x.example/me?tab=1", fields: [{ key: "f1", label: "Score", selector: "#s", kind: "number" }], auto: false },
+  ];
+  const text = JSON.stringify(toCloud(settings, trackers, 123));
+  assert.ok(!/example\.com\/hook|s3cret|discord\.com/.test(text));
+  const back = fromCloud(text);
+  assert.equal(back.updatedAt, 123);
+  assert.equal(back.github.theme, "hacker");
+  assert.equal(back.trackers.length, 2);
+  assert.equal(back.trackers[0].id, "codeforces-dagmon");
+  assert.equal(back.trackers[1].url, "https://x.example/me");
+});
+
+test("settings file: bad or foreign content is refused or cleaned", () => {
+  assert.equal(fromCloud("not json"), null);
+  assert.equal(fromCloud(null), null);
+  assert.equal(fromCloud(JSON.stringify({ trackers: [] })), null);
+  const back = fromCloud(JSON.stringify({
+    app: "profile-sync", updatedAt: 5, checkEvery: 7, github: { theme: "pink", folder: "" },
+    trackers: [
+      { kind: "builtin", platform: "nope", username: "a" },
+      { kind: "builtin", platform: "leetcode", username: "bad name!" },
+      { kind: "custom", url: "http://insecure.example/", fields: [{ selector: "#a" }] },
+      { kind: "builtin", platform: "leetcode", username: "ok_user" },
+      { kind: "builtin", platform: "leetcode", username: "ok_user" },
+    ],
+  }));
+  assert.equal(back.checkEvery, undefined);
+  assert.deepEqual(back.github, {});
+  assert.deepEqual(back.trackers.map((t) => t.id), ["leetcode-ok-user"]);
+});
+
+test("settings from older stats files (all.json)", () => {
+  const all = JSON.stringify([
+    { id: "codeforces-dagmon", url: "https://codeforces.com/profile/DAGMON" },
+    { id: "tryhackme-dagmon", url: "https://tryhackme.com/p/DAGMON" },
+    { id: "site-x", url: "https://x.example/" },
+  ]);
+  assert.deepEqual(trackersFromStats(all).map((t) => [t.id, t.auto]), [["codeforces-dagmon", true], ["tryhackme-dagmon", true]]);
+  assert.deepEqual(trackersFromStats("oops"), []);
+});
+
+test("all.json keeps profiles another computer wrote", () => {
+  const existing = JSON.stringify([{ id: "tryhackme-a", stats: { level: 4 } }, { id: "gone-x" }, { id: "codeforces-a", stats: { rating: 1 } }]);
+  const all = [{ id: "codeforces-a", site: "Codeforces", title: "a", url: "u", fields: { rating: 2 }, syncedAt: "t" }];
+  const out = mergeAll(existing, all, ["codeforces-a", "tryhackme-a"]);
+  assert.deepEqual(out.map((e) => e.id), ["codeforces-a", "tryhackme-a"]);
+  assert.equal(out[0].stats.rating, 2);
+  assert.deepEqual(mergeAll("bad", all, ["codeforces-a"]).map((e) => e.id), ["codeforces-a"]);
 });

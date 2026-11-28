@@ -1,6 +1,6 @@
 # Privacy policy
 
-*Last updated: November 25, 2026*
+*Last updated: November 28, 2026*
 
 Profile Sync is a browser extension that reads your public stats from coding and security sites and sends them where you choose. This policy explains what it handles and where that goes.
 
@@ -8,6 +8,7 @@ Profile Sync is a browser extension that reads your public stats from coding and
 
 - **Stats from supported sites.** This means the public profile numbers of the usernames you choose to track, such as level, rank, points and problems solved. It reads them from the site you're on after you click the extension's icon. Or, if you turn on automatic updates, it reads them directly from that site.
 - **Numbers you pick on other pages.** Only the parts of the page you clicked while picking, and only on that page.
+- **Which account is logged in**, on Codeforces, LeetCode and AtCoder only, and only if you allowed that site and "Track my accounts" is on: just the username, to track your own profile.
 - **Nothing else.** The extension doesn't read your browsing history, other pages, passwords, cookies or messages.
 
 ## What the extension stores
@@ -25,7 +26,7 @@ Removing a tracked profile deletes its stats and history. Uninstalling the exten
 
 Only to the places **you** turn on:
 
-- **GitHub:** your stats and card images are written to the repo you chose, using your GitHub sign-in.
+- **GitHub:** your stats and card images are written to the repo you chose, using your GitHub sign-in. So is a settings file (`settings.json`) with the profiles you track and your GitHub output settings, so your other computers can load them. It never contains your webhook or Discord addresses, secrets or sign-in.
 - **Webhook:** your stats are sent to the address you entered.
 - **Discord:** a message about your stats is posted through the Discord webhook you entered.
 - **The sites themselves:** to read your stats, the extension asks the site for that profile's public data, the same way the site's own pages do.

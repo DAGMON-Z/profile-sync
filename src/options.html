@@ -16,6 +16,12 @@
 </header>
 
 <main>
+  <section class="card warn-card" id="allow" hidden>
+    <h2>One more step on this computer</h2>
+    <p id="allow-text"></p>
+    <button id="allow-btn" class="primary">Allow</button>
+  </section>
+
   <section class="card">
     <h2>Tracked</h2>
     <p class="muted">The easiest way to add one: open your profile on the site and click the extension's icon. Or add it here.</p>
@@ -33,6 +39,7 @@
       </select>
     </label>
     <p class="muted small">With "Automatic" on, stats are also read whenever you have the site open, about once a minute. So new stats show up soon after you earn them.</p>
+    <label class="check"><input type="checkbox" id="auto-accounts"> Track my accounts: when I'm logged in on Codeforces, LeetCode or AtCoder and nothing is tracked there yet, track my account there by itself (needs that site allowed)</label>
   </section>
 
   <section class="card" id="github">
@@ -79,6 +86,7 @@
           <ul>
             <li>One commit per change, under your own name. Nothing is committed when nothing changed.</li>
             <li>It only writes in its folder (<code>profile-sync/</code>) in the repos you picked. It never edits your README; add the card there yourself.</li>
+            <li>Your tracked profiles and these settings are saved as <code>profile-sync/settings.json</code>, so your other computers load them when you sign in there. Webhook and Discord addresses are never saved there.</li>
             <li>To check or remove access: GitHub → Settings → Applications → <b>Installed GitHub Apps</b> (which repos) or <b>Authorized GitHub Apps</b> (Revoke).</li>
           </ul>
         </details>
@@ -124,7 +132,7 @@
     </div>
   </section>
 
-  <p class="muted small">Everything stays in this browser except what you send to the places above. <a href="https://github.com/DAGMON-Z/profile-sync/blob/main/PRIVACY.md" target="_blank" rel="noopener">Privacy</a> · <a href="https://github.com/DAGMON-Z/profile-sync" target="_blank" rel="noopener">Source code</a></p>
+  <p class="muted small">Everything stays in this browser except what you send to the places above (with GitHub on, that includes your settings file). <a href="https://github.com/DAGMON-Z/profile-sync/blob/main/PRIVACY.md" target="_blank" rel="noopener">Privacy</a> · <a href="https://github.com/DAGMON-Z/profile-sync" target="_blank" rel="noopener">Source code</a></p>
 </main>
 <script type="module" src="options.js"></script>
 </body>

@@ -10,11 +10,19 @@
 //    every few minutes (Settings: 5, 15, 30 or 60), even with no tab open.
 // Then the stats go to every output you turned on, only when they changed
 // (or when the last send to that output failed).
+//
+// Settings follow you (see lib/cloud.js): what's tracked is saved to
+// settings.json in your GitHub repo and loaded on your other computers.
+// And when you're logged in on a supported site that has nothing tracked yet,
+// your account there is tracked by itself (Settings: "Track my accounts").
 
 import { PLATFORMS } from "./lib/platforms.js";
 import { addToHistory, describe, fingerprint, makeStats, trackerId } from "./lib/stats.js";
 import { toDiscord, toGitHub, toWebhook } from "./lib/outputs.js";
 import { getData, getSettings, getTrackers, setData } from "./lib/settings.js";
+import { FILE, fromCloud, toCloud, trackersFromStats } from "./lib/cloud.js";
+import { cleanPath } from "./lib/outputs.js";
+import * as github from "./lib/github.js";
 
 const PAGE_GAP = 60 * 1000; // at most one read per tracker per minute (be gentle with the sites)
 
@@ -160,7 +168,7 @@ async function deliverNow(onlyId, { only = null, force = false }) {
       const st = data.status[name] || {};
       if (!force && st.ok && st.print === print) continue; // already sent these stats
       try {
-        const result = await send(cfg, data.latest, st.sent || null, { d: describe(t), history: data.history, all });
+        const result = await send(cfg, data.latest, st.sent || null, { d: describe(t), history: data.history, all, ids: trackers.map((x) => x.id) });
         data.status[name] = { ok: true, at: Date.now(), print, sent: data.latest, note: typeof result === "string" ? result : "sent" };
       } catch (e) {
         data.status[name] = { ...st, ok: false, at: Date.now(), note: String(e.message || e).slice(0, 200) };
@@ -175,6 +183,7 @@ async function deliverNow(onlyId, { only = null, force = false }) {
 async function saveTrackers(list) {
   await chrome.storage.local.set({ trackers: list });
   await updateAuto();
+  pushSoon();
 }
 
 async function addTracker(t) {
@@ -190,11 +199,19 @@ async function removeTracker(id) {
   await chrome.storage.local.remove(`t:${id}`);
 }
 
-// Register autosync.js on every site with automatic updates on, if allowed
+// Register autosync.js on every site with automatic updates on, if allowed,
+// and on allowed sites with nothing tracked yet (to notice your account there)
 async function updateAuto() {
   const origins = new Set();
-  for (const t of await getTrackers()) {
+  const trackers = await getTrackers();
+  for (const t of trackers) {
     if (t.auto && (await canAccess(t))) originsOf(t).forEach((o) => origins.add(o));
+  }
+  if ((await getSettings()).autoAccounts) {
+    for (const [id, p] of Object.entries(PLATFORMS)) {
+      if (!p.me || trackers.some((t) => t.kind === "builtin" && t.platform === id)) continue;
+      if (await chrome.permissions.contains({ origins: p.origins })) p.origins.forEach((o) => origins.add(o));
+    }
   }
   const old = await chrome.scripting.getRegisteredContentScripts({ ids: ["autosync"] });
   if (old.length) await chrome.scripting.unregisterContentScripts({ ids: ["autosync"] });
@@ -211,7 +228,13 @@ async function syncAllInBackground() {
   }
 }
 
-chrome.alarms.onAlarm.addListener((a) => a.name === "sync" && syncAllInBackground());
+chrome.alarms.onAlarm.addListener(async (a) => {
+  if (a.name === "sync") {
+    await pull().catch(() => {});
+    await syncAllInBackground();
+  }
+  if (a.name === "push") await push().catch(() => {});
+});
 
 async function setAlarm() {
   const { checkEvery } = await getSettings();
@@ -222,10 +245,16 @@ async function setAlarm() {
 async function setup() {
   await setAlarm();
   await updateAuto().catch(() => {});
+  await pull().catch(() => {}); // also writes settings.json the first time
 }
 chrome.runtime.onInstalled.addListener(setup);
 chrome.runtime.onStartup.addListener(setup);
-chrome.permissions.onAdded.addListener(() => updateAuto());
+// A site was allowed (e.g. after loading settings on a new computer): start
+// reading it right away
+chrome.permissions.onAdded.addListener(async () => {
+  await updateAuto();
+  await syncAllInBackground();
+});
 chrome.permissions.onRemoved.addListener(() => updateAuto());
 
 // Settings changed (an output turned on, a new repo...): send what's missing
@@ -233,8 +262,151 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.settings) {
     deliver();
     setAlarm();
+    updateAuto().catch(() => {});
+    pushSoon();
   }
 });
+
+// ---------- settings on GitHub (lib/cloud.js) ----------
+// chrome.storage "cloud" = { at, text }: the version last written or loaded,
+// so nothing is written back when nothing changed.
+
+async function cloudPlace(settings) {
+  const g = settings.outputs.github;
+  if (!g.enabled || !g.repo || !(await github.signedIn())) return null;
+  return { repo: g.repo, branch: g.branch || "", path: `${cleanPath(g.folder, "profile-sync")}/${FILE}` };
+}
+
+const compare = (settings, trackers) => JSON.stringify(toCloud(settings, trackers, 0));
+
+// Write a few seconds after the last change (alarms survive the background
+// part going to sleep; 0.1 min is rounded up by the browser, that's fine)
+function pushSoon() {
+  chrome.alarms.create("push", { delayInMinutes: 0.1 });
+}
+
+async function push() {
+  const place = await cloudPlace(await getSettings());
+  if (!place) return;
+  const remote = fromCloud(await github.readFile(place.repo, place.path, place.branch));
+  let { cloud } = await chrome.storage.local.get("cloud");
+  // Changed on another computer since we last synced (or this computer never
+  // synced): take that version, keeping anything added here, so a fresh
+  // computer never wipes your list
+  if (remote && remote.updatedAt > (cloud?.at || 0)) {
+    const local = await getTrackers();
+    const extra = local.filter((t) => !remote.trackers.some((x) => x.id === t.id));
+    await applyCloud(await getSettings(), { ...remote, trackers: [...remote.trackers, ...extra] }, place.repo);
+    if (!extra.length) return;
+    cloud = null; // write the combined list
+  }
+  const settings = await getSettings();
+  const trackers = await getTrackers();
+  const text = compare(settings, trackers);
+  if (cloud?.text === text) return;
+  const at = Date.now();
+  const body = JSON.stringify(toCloud(settings, trackers, at), null, 2) + "\n";
+  await github.writeFiles(place.repo, [{ path: place.path, content: body }], "Profile Sync: settings", place.branch);
+  await chrome.storage.local.set({ cloud: { at, text } });
+}
+
+// Load the newer settings.json (written by another computer)
+async function pull() {
+  const settings = await getSettings();
+  const place = await cloudPlace(settings);
+  if (!place) return { ok: false };
+  const { cloud } = await chrome.storage.local.get("cloud");
+  // Something changed here that isn't on GitHub yet: push() combines both
+  if (!cloud || cloud.text !== compare(settings, await getTrackers())) {
+    await push();
+    return { ok: true };
+  }
+  const remote = fromCloud(await github.readFile(place.repo, place.path, place.branch));
+  if (!remote || remote.updatedAt <= cloud.at) return { ok: true, changed: false };
+  await applyCloud(settings, remote, place.repo);
+  return { ok: true, changed: true };
+}
+
+async function applyCloud(settings, remote, repo) {
+  const next = {
+    ...settings,
+    ...(remote.checkEvery ? { checkEvery: remote.checkEvery } : {}),
+    ...(remote.autoAccounts !== undefined ? { autoAccounts: remote.autoAccounts } : {}),
+    outputs: { ...settings.outputs, github: { ...settings.outputs.github, ...remote.github, enabled: true, repo } },
+  };
+  await chrome.storage.local.set({
+    settings: next,
+    trackers: remote.trackers,
+    cloud: { at: remote.updatedAt, text: compare(next, remote.trackers) },
+  });
+  await updateAuto().catch(() => {});
+}
+
+// After signing in on a new computer: find the repo with your settings
+async function connect() {
+  const settings = await getSettings();
+  const folder = cleanPath(settings.outputs.github.folder, "profile-sync");
+  let repos = await github.repos();
+  const chosen = settings.outputs.github.repo;
+  if (chosen && repos.includes(chosen)) repos = [chosen, ...repos.filter((r) => r !== chosen)];
+  repos = repos.slice(0, 30);
+  for (const repo of repos) {
+    const remote = fromCloud(await github.readFile(repo, `${folder}/${FILE}`).catch(() => null));
+    if (remote) {
+      const local = await getTrackers();
+      await applyCloud(settings, remote, repo);
+      // anything already tracked on this computer is added to it
+      const extra = local.filter((t) => !remote.trackers.some((x) => x.id === t.id));
+      if (extra.length) await saveTrackers([...remote.trackers, ...extra]);
+      return { ok: true, found: "settings", repo, count: remote.trackers.length + extra.length };
+    }
+  }
+  // Made with an older version: no settings.json, but stats files are there
+  for (const repo of repos) {
+    const found = trackersFromStats(await github.readFile(repo, `${folder}/all.json`).catch(() => null));
+    if (!found.length) continue;
+    const local = await getTrackers();
+    const list = [...local, ...found.filter((t) => !local.some((x) => x.id === t.id))];
+    await chrome.storage.local.set({ settings: { ...settings, outputs: { ...settings.outputs, github: { ...settings.outputs.github, enabled: true, repo } } } });
+    await saveTrackers(list);
+    return { ok: true, found: "stats", repo, count: found.length };
+  }
+  if (repos.length === 1) {
+    await chrome.storage.local.set({ settings: { ...settings, outputs: { ...settings.outputs, github: { ...settings.outputs.github, enabled: true, repo: repos[0] } } } });
+    return { ok: true, found: "repo", repo: repos[0], count: 0 };
+  }
+  return { ok: true, found: "none", count: 0 };
+}
+
+// Sites tracked here that this browser isn't allowed to read yet
+async function missingSites() {
+  const out = new Set();
+  for (const t of await getTrackers()) {
+    if (!t.auto) continue;
+    for (const o of originsOf(t)) if (!(await chrome.permissions.contains({ origins: [o] }))) out.add(o);
+  }
+  return [...out];
+}
+
+// ---------- your account on a site ----------
+
+const lastLook = {}; // platform -> time, so a site is asked at most every 10 minutes
+const NAME = /^[\w.-]{1,40}$/;
+
+async function noticeAccount(tab) {
+  if (!(await getSettings()).autoAccounts) return;
+  const platform = Object.keys(PLATFORMS).find((id) => PLATFORMS[id].origins.some((o) => tab.url.startsWith(o.slice(0, -1))));
+  const p = PLATFORMS[platform];
+  if (!p?.me) return;
+  if ((await getTrackers()).some((t) => t.kind === "builtin" && t.platform === platform)) return;
+  if (Date.now() - (lastLook[platform] || 0) < 10 * 60 * 1000) return;
+  lastLook[platform] = Date.now();
+  const [res] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: p.me }).catch(() => []);
+  const user = res?.result;
+  if (typeof user !== "string" || !NAME.test(user)) return;
+  const t = await addTracker({ kind: "builtin", platform, username: user, auto: true });
+  await syncTracker(t, { tabId: tab.id, force: true });
+}
 
 // ---------- messages ----------
 
@@ -265,6 +437,15 @@ const HANDLERS = {
     await deliver(id || null, { only: only || null, force: Boolean(force) });
     return { ok: true };
   },
+  async connect() {
+    return connect();
+  },
+  async pull() {
+    return pull();
+  },
+  async missing() {
+    return { ok: true, origins: await missingSites() };
+  },
   async pick({ tabId }) {
     await chrome.scripting.executeScript({ target: { tabId }, files: ["picker.js"] });
     return { ok: true };
@@ -274,6 +455,7 @@ const HANDLERS = {
 const FROM_PAGES = {
   // autosync.js: a page of a site with automatic updates is open
   async "page-open"(msg, tab) {
+    await noticeAccount(tab).catch(() => {});
     for (const t of await getTrackers()) {
       if (!t.auto) continue;
       const match = t.kind === "custom" ? samePage(tab.url, t.url) : originsOf(t).some((o) => tab.url.startsWith(o.slice(0, -1)));

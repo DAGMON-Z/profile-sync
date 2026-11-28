@@ -141,6 +141,20 @@ export async function repos() {
   return out.sort((a, b) => a.localeCompare(b));
 }
 
+// One file's text, or null if it isn't there
+export async function readFile(repo, path, branch = "") {
+  const ref = branch ? `?ref=${encodeURIComponent(branch)}` : "";
+  try {
+    const r = await call(`/repos/${repo}/contents/${path.split("/").map(encodeURIComponent).join("/")}${ref}`);
+    if (!r || Array.isArray(r) || r.encoding !== "base64") return null;
+    const bytes = Uint8Array.from(atob(r.content.replace(/\s/g, "")), (c) => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  } catch (e) {
+    if (e.status === 404) return null;
+    throw e;
+  }
+}
+
 // Write several files in ONE commit. Skips the commit if nothing changed.
 // files: [{ path, content }]. Returns "committed" or "unchanged".
 export async function writeFiles(repo, files, message, branch = "") {

@@ -48,6 +48,17 @@ Want a site built in? [Open an issue](../../issues).
 2. **Or pick numbers on any site.** Open the page, click the icon, choose **Pick numbers on this page**, click each number you want and name it, then press **Save**.
 3. **Choose where your stats go** in **Settings**: GitHub, a webhook, Discord, or just export.
 
+Logged in on Codeforces, LeetCode or AtCoder? With **Track my accounts** on (the default), your account there is tracked by itself once you allow the site.
+
+### More than one computer
+
+With GitHub on, your tracked profiles and settings are saved as `profile-sync/settings.json` in your repo. On another computer:
+
+1. Install Profile Sync and open **Settings → Sign in with GitHub**.
+2. It finds your settings and loads them. Press **Allow** once so it may read your sites on this computer too.
+
+That's it: whichever computer you use, your stats update. Changes you make on one computer reach the others within a few minutes. Webhook and Discord addresses aren't saved in the repo (they work like passwords), so enter those on each computer.
+
 ### A card for your GitHub profile
 
 Turn on GitHub in the settings, sign in and pick a repo (for example your profile repo `you/you`). Profile Sync writes:
@@ -56,6 +67,7 @@ Turn on GitHub in the settings, sign in and pick a repo (for example your profil
 profile-sync/<site>-<username>.svg    the card
 profile-sync/<site>-<username>.json   the stats
 profile-sync/all.json                 every tracked profile in one file
+profile-sync/settings.json            what you track, for your other computers
 ```
 
 Then add the card to your README:
