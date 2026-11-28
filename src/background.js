@@ -20,7 +20,7 @@ import { PLATFORMS } from "./lib/platforms.js";
 import { addToHistory, describe, fingerprint, makeStats, trackerId } from "./lib/stats.js";
 import { toDiscord, toGitHub, toWebhook } from "./lib/outputs.js";
 import { getData, getSettings, getTrackers, setData } from "./lib/settings.js";
-import { FILE, fromCloud, toCloud, trackersFromStats } from "./lib/cloud.js";
+import { FILE, cleanHide, fromCloud, toCloud, trackersFromStats } from "./lib/cloud.js";
 import { cleanPath } from "./lib/outputs.js";
 import * as github from "./lib/github.js";
 
@@ -427,6 +427,18 @@ const HANDLERS = {
     const t = list.find((x) => x.id === id);
     if (t) t.auto = Boolean(auto);
     await saveTrackers(list);
+    return { ok: true };
+  },
+  // Which numbers to show for one profile: then redraw its card on GitHub
+  async setHide({ id, hide }) {
+    const list = await getTrackers();
+    const t = list.find((x) => x.id === id);
+    if (!t) return { ok: false, error: "Unknown tracker" };
+    const keys = describe(t).fields.map((f) => f.key);
+    delete t.hide;
+    Object.assign(t, cleanHide(hide, keys));
+    await saveTrackers(list);
+    if ((await getSettings()).outputs.github.enabled) await deliver(id, { only: "github", force: true });
     return { ok: true };
   },
   async remove({ id }) {

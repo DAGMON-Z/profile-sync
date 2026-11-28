@@ -1,7 +1,7 @@
 // The stats card: an SVG image people can put in a GitHub README.
 // It uses no outside fonts or images, so it shows the same everywhere.
 
-import { format } from "./stats.js";
+import { format, shown } from "./stats.js";
 
 export const THEMES = {
   dark: { bg: "#1a1b26", border: "#2f334d", title: "#7aa2f7", text: "#c0caf5", muted: "#787c99", accent: "#9ece6a", bar: "#292e42" },
@@ -23,6 +23,7 @@ const cut = (s, n) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 
 // stats: saved stats; d: describe(tracker)
 export function renderCard(stats, d, { theme = "dark" } = {}) {
+  d = shown(d);
   const t = THEMES[theme] || THEMES.dark;
   const font = "font-family=\"'Segoe UI', Ubuntu, 'Helvetica Neue', Arial, sans-serif\"";
   const head = d.headline;

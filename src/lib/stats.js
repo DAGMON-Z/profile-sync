@@ -16,8 +16,11 @@ export function trackerId(t) {
   return t.kind === "builtin" ? `${t.platform}-${slug(t.username)}` : `site-${slug(t.name)}`;
 }
 
-// Everything the rest of the extension needs to know about a tracker
+// Everything the rest of the extension needs to know about a tracker.
+// "hide": the numbers you chose not to show (they're still read and saved
+// in the stats files; only the card, the popup and Discord leave them out).
 export function describe(t) {
+  const hide = Array.isArray(t.hide) ? t.hide : [];
   if (t.kind === "builtin") {
     const p = PLATFORMS[t.platform];
     return {
@@ -26,6 +29,7 @@ export function describe(t) {
       url: p.profile(t.username),
       fields: p.fields,
       headline: p.headline,
+      hide,
     };
   }
   return {
@@ -34,6 +38,18 @@ export function describe(t) {
     url: t.url,
     fields: t.fields.map(({ key, label, kind }) => ({ key, label, kind: kind || "number" })),
     headline: null,
+    hide,
+  };
+}
+
+// The same description with only the numbers you chose to show
+export function shown(d) {
+  const hide = d.hide || [];
+  if (!hide.length) return d;
+  return {
+    ...d,
+    fields: d.fields.filter((f) => !hide.includes(f.key)),
+    headline: d.headline && !hide.includes(d.headline.key) ? d.headline : null,
   };
 }
 

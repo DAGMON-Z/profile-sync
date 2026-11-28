@@ -119,7 +119,7 @@ export const PLATFORMS = {
       { key: "rank", label: "Rank", kind: "text" },
       { key: "maxRank", label: "Max rank", kind: "text" },
       // keep: only known when read from an open Codeforces tab (see read)
-      { key: "solved", label: "Solved", kind: "number", keep: true },
+      { key: "solved", label: "Problems solved", kind: "number", keep: true },
       { key: "contribution", label: "Contribution", kind: "number" },
     ],
     me: async function () {

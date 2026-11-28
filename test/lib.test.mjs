@@ -210,3 +210,21 @@ test("all.json keeps profiles another computer wrote", () => {
   assert.equal(out[0].stats.rating, 2);
   assert.deepEqual(mergeAll("bad", all, ["codeforces-a"]).map((e) => e.id), ["codeforces-a"]);
 });
+
+import { shown } from "../src/lib/stats.js";
+
+test("hidden numbers: left out of card and Discord, kept in the stats file", () => {
+  const t = { id: "tryhackme-a", kind: "builtin", platform: "tryhackme", username: "a", hide: ["level", "points"] };
+  const d = describe(t);
+  const stats = makeStats(t, { ok: true, fields: { level: 4, points: 1010, rooms: 19, rank: "Top 30%" } });
+  assert.equal(stats.fields.points, 1010);
+  assert.deepEqual(shown(d).fields.map((f) => f.key).includes("points"), false);
+  assert.equal(shown(d).headline, null);
+  const svg = renderCard(stats, d);
+  assert.ok(!/Points|LVL/.test(svg) && /Rooms/.test(svg));
+  const msg = JSON.stringify(discordMessage(stats, null, d));
+  assert.ok(!/Points/.test(msg) && /Rooms/.test(msg));
+  assert.equal(exportJson(stats, undefined, d).stats.points, 1010);
+  const back = fromCloud(JSON.stringify({ app: "profile-sync", trackers: [{ ...t, hide: ["level", "nope", "level"] }] }));
+  assert.deepEqual(back.trackers[0].hide, ["level"]);
+});

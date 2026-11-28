@@ -16,11 +16,18 @@ const NAME = /^[\w.-]{1,40}$/;
 const THEMES = ["dark", "light", "hacker"];
 const EVERY = [5, 15, 30, 60];
 
+// Only known number names, each once; left out when nothing is hidden
+export function cleanHide(hide, keys) {
+  const list = (Array.isArray(hide) ? hide : []).filter((k, i, a) => keys.includes(k) && a.indexOf(k) === i);
+  return list.length ? { hide: list } : {};
+}
+
 function cleanTracker(t) {
   if (!t || typeof t !== "object") return null;
   if (t.kind === "builtin") {
     if (!PLATFORMS[t.platform] || !NAME.test(String(t.username || ""))) return null;
-    const out = { kind: "builtin", platform: t.platform, username: t.username, auto: Boolean(t.auto) };
+    const keys = PLATFORMS[t.platform].fields.map((f) => f.key);
+    const out = { kind: "builtin", platform: t.platform, username: t.username, auto: Boolean(t.auto), ...cleanHide(t.hide, keys) };
     return { ...out, id: trackerId(out) };
   }
   if (t.kind === "custom") {
@@ -38,7 +45,7 @@ function cleanTracker(t) {
       kind: f?.kind === "text" ? "text" : "number",
     })).filter((f) => f.selector);
     if (!fields.length) return null;
-    const out = { kind: "custom", name: String(t.name || u.hostname).slice(0, 40), url: u.origin + u.pathname, fields, auto: Boolean(t.auto) };
+    const out = { kind: "custom", name: String(t.name || u.hostname).slice(0, 40), url: u.origin + u.pathname, fields, auto: Boolean(t.auto), ...cleanHide(t.hide, fields.map((f) => f.key)) };
     return { ...out, id: trackerId(out) };
   }
   return null;

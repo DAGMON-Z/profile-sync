@@ -1,7 +1,7 @@
 // Sending stats to the places the user turned on: GitHub, a webhook, Discord.
 // Each output gets the same clean stats; nothing else from the sites is sent.
 
-import { changes, exportJson, format } from "./stats.js";
+import { changes, exportJson, format, shown } from "./stats.js";
 import { renderCard } from "./card.js";
 import * as github from "./github.js";
 
@@ -68,6 +68,7 @@ export async function toWebhook(cfg, stats, before, { d }) {
 }
 
 export function discordMessage(stats, before, d) {
+  d = shown(d);
   const diff = changes(before, stats, d.fields);
   const lines = diff.length
     ? diff.map((c) => `**${c.label}:** ${format(c.from, c.kind)} → ${format(c.to, c.kind)}`)
@@ -130,7 +131,7 @@ export async function toGitHub(cfg, stats, before, { d, history, all, ids = all.
     files.push({ path: `${dir}/${stats.id}.svg`, content: renderCard(stats, d, { theme: cfg.theme }) });
   }
   if (!files.length) return "nothing to write";
-  const first = d.fields.find((f) => stats.fields[f.key] !== undefined);
+  const first = shown(d).fields.find((f) => stats.fields[f.key] !== undefined);
   const message = `${stats.site}: ${stats.title}${first ? `, ${first.label.toLowerCase()} ${format(stats.fields[first.key], first.kind)}` : ""}`;
   try {
     return await github.writeFiles(cfg.repo, files, message, cfg.branch || "");

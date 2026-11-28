@@ -1,7 +1,7 @@
 // The window that opens when you click the extension's icon.
 
 import { PLATFORMS, detect } from "./lib/platforms.js";
-import { describe, exportJson, format, historyCsv } from "./lib/stats.js";
+import { describe, exportJson, format, historyCsv, shown } from "./lib/stats.js";
 import { renderCard } from "./lib/card.js";
 import { getData, getSettings, getTrackers } from "./lib/settings.js";
 
@@ -168,7 +168,7 @@ async function render() {
     el(".title").href = d.url;
     el(".site").textContent = d.site;
     const tiles = el(".tiles");
-    for (const f of d.fields.slice(0, 6)) {
+    for (const f of shown(d).fields.slice(0, 6)) {
       const v = data.latest?.fields[f.key];
       if (v === undefined) continue;
       const tile = document.createElement("div");

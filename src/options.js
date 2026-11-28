@@ -1,7 +1,7 @@
 // The settings page: tracked profiles and outputs.
 
 import { PLATFORMS } from "./lib/platforms.js";
-import { describe, format } from "./lib/stats.js";
+import { describe, format, shown } from "./lib/stats.js";
 import { renderCard } from "./lib/card.js";
 import { discordUrlProblem, originOf, webhookUrlProblem } from "./lib/outputs.js";
 import { getData, getSettings, getTrackers } from "./lib/settings.js";
@@ -61,7 +61,7 @@ async function showTrackers() {
     name.textContent = `${data.latest?.title || d.title}`;
     const meta = document.createElement("span");
     meta.className = "muted small";
-    const first = d.fields.find((f) => data.latest?.fields[f.key] !== undefined);
+    const first = shown(d).fields.find((f) => data.latest?.fields[f.key] !== undefined);
     const read = data.status.read;
     meta.textContent = ` · ${d.site}${first ? ` · ${first.label} ${format(data.latest.fields[first.key], first.kind)}` : ""}${read ? ` · ${read.ok ? `checked ${ago(read.at)}` : read.note}` : ""}`;
     info.append(name, meta);
@@ -85,7 +85,31 @@ async function showTrackers() {
       await ask({ type: "remove", id: t.id });
       showTrackers();
     };
-    li.append(info, auto, remove);
+    // Which numbers to show (card, popup, Discord)
+    const pickNums = document.createElement("details");
+    pickNums.className = "nums";
+    const sum = document.createElement("summary");
+    const hidden = d.hide.filter((k) => d.fields.some((f) => f.key === k)).length;
+    sum.textContent = hidden ? `Numbers: ${d.fields.length - hidden} of ${d.fields.length} shown` : "Numbers: all shown";
+    pickNums.append(sum);
+    for (const f of d.fields) {
+      const lab = document.createElement("label");
+      lab.className = "check small";
+      const cb = Object.assign(document.createElement("input"), { type: "checkbox", checked: !d.hide.includes(f.key) });
+      cb.onchange = async () => {
+        const hide = [...pickNums.querySelectorAll("input")].map((x, i) => (!x.checked ? d.fields[i].key : null)).filter(Boolean);
+        await ask({ type: "setHide", id: t.id, hide });
+        sum.textContent = hide.length ? `Numbers: ${d.fields.length - hide.length} of ${d.fields.length} shown` : "Numbers: all shown";
+        preview();
+      };
+      lab.append(cb, ` ${f.label}`);
+      pickNums.append(lab);
+    }
+    const hint = document.createElement("p");
+    hint.className = "muted small";
+    hint.textContent = "Hidden numbers aren't shown on the card, in this window or on Discord. They're still saved in the stats files.";
+    pickNums.append(hint);
+    li.append(info, auto, remove, pickNums);
     ul.append(li);
   }
 }
